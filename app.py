@@ -2,7 +2,7 @@ from flask import Flask
 
 app = Flask(__name__)
 
-app.config['SQLALCHEMY_DATABASE_URI'] = ''
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql+psychopg2://trello_dev:spameggs123@localhost:5432'
 
 @app.route('/')
 def index():
