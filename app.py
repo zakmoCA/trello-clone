@@ -1,13 +1,15 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy 
 from datetime import date
-import json
+from flask_marshmallow import Marshmallow
+
 
 app = Flask(__name__)
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql+psycopg2://trello_dev:spameggs123@localhost:5432/trello_clone'
 
 db = SQLAlchemy(app)
+ma= Marshmallow(app)
 
 class Card(db.Model):
     
@@ -17,6 +19,11 @@ class Card(db.Model):
     description = db.Column(db.Text())
     status = db.Column(db.String(30))
     date_created = db.Column(db.Date())
+
+class CardSchema(ma.Schema):
+    class Meta:
+        fields = ('id', 'title', 'description', 'status', 'date_created')
+        ordered = True
 
 @app.cli.command('create')
 def create_db():
@@ -62,12 +69,12 @@ def seed_db():
 
 
 @app.cli.command('all_cards')
+@app.route('/cards')
 def all_cards():
     # select * from cards;
-    stmt = db.select(Card).where(Card.status != 'Done', Card.id > 2)
+    stmt = db.select(Card).order_by(Card.status.desc())
     cards = db.session.scalars(stmt).all()
-    for card in cards:
-        print(card.__dict__)
+    return CardSchema(many=True).dump(cards)
 
 @app.route('/')
 def index():
