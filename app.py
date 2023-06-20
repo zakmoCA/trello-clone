@@ -1,10 +1,10 @@
-from flask import Flask
+from flask import Flask, request
 from flask_sqlalchemy import SQLAlchemy 
 from datetime import date
 from flask_marshmallow import Marshmallow
 from flask_bcrypt import Bcrypt
 from sqlalchemy.exc import IntegrityError
-from flask_jwt_extended import JWTManager, create_access_token
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required
 from datetime import timedelta
 
 
@@ -139,6 +139,7 @@ def login():
 
 
 @app.route('/cards')
+@jwt_required()
 def all_cards():
     # select * from cards;
     stmt = db.select(Card).order_by(Card.status.desc())
