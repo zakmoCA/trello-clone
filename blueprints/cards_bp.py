@@ -15,3 +15,14 @@ def all_cards():
     stmt = db.select(Card).order_by(Card.status.desc())
     cards = db.session.scalars(stmt).all()
     return CardSchema(many=True).dump(cards)
+
+@cards_bp.route('/cards/<int:card_id>')
+@jwt_required()
+def one_card(card_id):
+    admin_required()
+
+    stmt = db.select(Card).filter_by(id=card_id)
+    card = db.session.scalar(stmt)
+    if card is None:
+        return{"error": "Card not found"}, 404
+    return CardSchema().dump(card)
