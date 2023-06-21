@@ -4,15 +4,15 @@ from models.user import User
 from models.card import Card
 from datetime import date
 
-db_commands = Blueprint('db', __name__)
+cli_bp = Blueprint('db', __name__)
 
-@db_commands.cli.command('create')
+@cli_bp.cli.command('create')
 def create_db():
     db.drop_all()
     db.create_all()
     print('Tables created successfully')
 
-@db_commands.cli.command('seed')
+@cli_bp.cli.command('seed')
 def seed_db():
     users = [
         User(

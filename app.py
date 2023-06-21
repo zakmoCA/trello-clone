@@ -1,14 +1,15 @@
 from flask import Flask, request, abort
 from datetime import date
 from sqlalchemy.exc import IntegrityError
-from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
+from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 from datetime import timedelta
 from os import environ
 from dotenv import load_dotenv
 from models.user import User, UserSchema
 from models.card import Card, CardSchema
 from init import db, ma, bcrypt, jwt
-from blueprints.cli_bp import db_commands
+from blueprints.cli_bp import cli_bp
+from blueprints.auth_bp import auth_bp
 
 load_dotenv()
 
@@ -19,10 +20,6 @@ app.config['JWT_SECRET_KEY'] = environ.get('JWT_KEY')
 
 app.config['SQLALCHEMY_DATABASE_URI'] = environ.get('DB_URI')
 
-db.init_app(app)
-ma.init_app(app)
-jwt.init_app(app)
-bcrypt.init_app(app)
 
 def admin_required():
     user_email = get_jwt_identity()
@@ -35,42 +32,9 @@ def admin_required():
 def unauthorized(err):
     return {'error': 'You must be an admin'}, 401
 
-app.register_blueprint(db_commands)
+app.register_blueprint(cli_bp)
+app.register_blueprint(auth_bp)
 
-@app.route('/register', methods=['POST'])
-def register():
-    try:
-        # Parse, sanitize and validate the incoming JSON data
-        # via the schema
-        user_info = UserSchema().load(request.json)
-        # Create a new User model instance with the schema data
-        user = User(
-            email=user_info['email'],
-            password=bcrypt.generate_password_hash(user_info['password']).decode('utf-8'),
-            name=user_info['name']
-        )
-
-        # Add and commit the new user
-        db.session.add(user)
-        db.session.commit()
-
-        # Return the new user, excluding the password
-        return UserSchema(exclude=['password']).dump(user), 201
-    except IntegrityError:
-        return {'error': 'Email address already in use'}, 409
-    
-@app.route('/login', methods=['POST'])
-def login():
-    try:
-        stmt = db.select(User).filter_by(email=request.json['email'])
-        user = db.session.scalar(stmt)
-        if user and bcrypt.check_password_hash(user.password, request.json['password']):
-            token = create_access_token(identity=user.email, expires_delta=timedelta(days=1))
-            return {'token': token, 'user': UserSchema(exclude=['password']).dump(user)}
-        else:
-            return {'error': 'Invalid email address or password'}, 401
-    except KeyError:
-        return {'error': 'Email and password are required'}, 400
 
 
 @app.route('/cards')
