@@ -8,6 +8,13 @@ from flask_jwt_extended import create_access_token, get_jwt_identity
  
 auth_bp = Blueprint('auth', __name__)
 
+@auth_bp.route('/users')
+def all_users():
+    stmt = db.select(User)
+    users = db.session.scalars(stmt)
+    return UserSchema(many=True).dump(users)
+
+
 @auth_bp.route('/register', methods=['POST'])
 def register():
     try:
@@ -36,7 +43,7 @@ def login():
         stmt = db.select(User).filter_by(email=request.json['email'])
         user = db.session.scalar(stmt)
         if user and bcrypt.check_password_hash(user.password, request.json['password']):
-            token = create_access_token(identity=user.email, expires_delta=timedelta(days=1))
+            token = create_access_token(identity=user.email, expires_delta=timedelta(days=2))
             return {'token': token, 'user': UserSchema(exclude=['password']).dump(user)}
         else:
             return {'error': 'Invalid email address or password'}, 401

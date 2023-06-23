@@ -26,6 +26,10 @@ def seed_db():
             password=bcrypt.generate_password_hash('tisbutascratch').decode('utf-8')
         )
     ]
+
+    db.session.query(User).delete()
+    db.session.add_all(users)
+    db.session.commit()
     
     # Create an instance of the Card model in memory
     cards = [
@@ -34,30 +38,31 @@ def seed_db():
         description = 'Stage 1 - Create an ERD',
         # Create an ERC
         status = 'Done',
-        date_created = date.today()
+        date_created = date.today(),
+        user_id=users[0].id #admin is first in our users list so this will be admin
         ),
         Card(
         title = 'ORM Queries',
         description = 'Stage 2 - Implement several queries',
         status = 'In progress',
-        date_created = date.today()
+        date_created = date.today(),
+        user_id=users[0].id #admin is first in our users list so this will be admin
         ),
         Card(
         title = 'Marshmallow',
         description = 'Stage 3 - Implement jsonify of mdoels',
         status = 'In progress',
-        date_created = date.today()
+        date_created = date.today(),
+        user_id=users[1].id #John Cleese is cecond in our users list so this will be John
         ),
     ]
     # Truncate the Card table
     db.session.query(Card).delete()
-    db.session.query(User).delete()
     
     # Add the card to the session (transaction)
     db.session.add_all(cards)
-    db.session.add_all(users)
     
-
     # Commit the transaction to the database
     db.session.commit()
+    
     print('Models seeded')
