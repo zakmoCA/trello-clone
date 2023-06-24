@@ -2,6 +2,7 @@ from flask import Blueprint
 from init import db, bcrypt
 from models.user import User
 from models.card import Card
+from models.comment import Comment
 from datetime import date
 
 cli_bp = Blueprint('db', __name__)
@@ -64,5 +65,34 @@ def seed_db():
     
     # Commit the transaction to the database
     db.session.commit()
+
+    comments = [
+        Comment(
+            message='Comment 1',
+            date_created=date.today(),
+            user_id=users[0].id,
+            card_id=cards[1].id
+        ),
+        Comment(
+            message='Comment 2',
+            date_created=date.today(),
+            user_id=users[1].id,
+            card_id=cards[1].id
+        ),
+        Comment(
+            message='Comment 3',
+            date_created=date.today(),
+            user_id=users[1].id,
+            card_id=cards[0].id
+        )
+    ]
+    # Truncate the Comment table
+    db.session.query(Comment).delete()
     
+    # Add the comment to the session (transaction)
+    db.session.add_all(comments)
+    
+    # Commit the transaction to the database
+    db.session.commit()
+
     print('Models seeded')
